@@ -1,7 +1,5 @@
 from torchvision import datasets
 
-from cisl.utils.string import StringBuilder
-
 from .dataset import Dataset
 
 
