@@ -1,4 +1,3 @@
-
 FROM pytorch/pytorch:1.10.0-cuda11.3-cudnn8-runtime
 
 ARG USERNAME=cisl
@@ -6,6 +5,7 @@ ARG USERNAME=cisl
 USER root
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        
         sudo \
         zsh && \
     apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
