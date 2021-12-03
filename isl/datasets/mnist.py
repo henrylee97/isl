@@ -1,6 +1,6 @@
 from torchvision import datasets
 
-from .dataset import Dataset
+from isl.datasets.dataset import Dataset
 
 
 class MNIST(Dataset):

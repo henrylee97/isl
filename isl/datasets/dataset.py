@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Iterable
 
-from cisl.utils.string import StringBuilder
+from isl.utils.string import StringBuilder
 
 
 class Dataset(ABC):
