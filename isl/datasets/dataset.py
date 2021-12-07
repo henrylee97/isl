@@ -7,7 +7,7 @@ from isl.utils.string import StringBuilder
 class Dataset(ABC):
 
     @abstractmethod
-    def __init__(self, cache_dir: str = '.cisl', download=False) -> None:
+    def __init__(self, cache_dir: str = '.isl', download=False) -> None:
         self._cache_dir = cache_dir
         self._download = download
 
