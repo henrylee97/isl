@@ -1,5 +1,5 @@
 {
-    "name": "cisl-devcontainer",
+    "name": "isl-devcontainer",
     "dockerFile": "Dockerfile",
     "runArgs": [ "--init" ],
     // If you want to use GPUs append the following to "runArgs": "--gpus=all"
@@ -23,5 +23,5 @@
         "mutantdino.resourcemonitor",
     ],
 
-    "remoteUser": "cisl"
+    "remoteUser": "isl"
 }

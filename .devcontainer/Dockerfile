@@ -1,6 +1,6 @@
 FROM pytorch/pytorch:1.10.0-cuda11.3-cudnn8-runtime
 
-ARG USERNAME=cisl
+ARG USERNAME=isl
 
 USER root
 RUN apt-get update && \
