@@ -131,3 +131,5 @@ dmypy.json
 # isl
 .isl/
 
+# PyTorch
+*.pt
