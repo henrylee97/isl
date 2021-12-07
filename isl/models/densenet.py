@@ -1,7 +1,7 @@
 from torch import nn
 
 
-def DenseNet(in_features: int, n_class: int = 10, bias: bool = True) -> nn.Module:
+def DenseNet(in_features: int, n_class: int, bias: bool = True) -> nn.Module:
     model = nn.Sequential(
         nn.Linear(in_features, 512, bias=bias),
         nn.ReLU(),
