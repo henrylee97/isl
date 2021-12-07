@@ -36,7 +36,7 @@ def main(*argv) -> None:
     parser = ArgumentParser(description='ISL Example Script: Train LeNet5 with CIFAR')
     parser.add_argument('--cuda', action='store_true', help='Use GPU if avaiable')
     parser.add_argument('--cifar100', action='store_true', help='Use CIFAR100 instead of CIFAR10')
-    parser.add_argument('--batch-size', type=int, default=100, nargs=1, metavar='<int>', help='Set batch size (default=100)')
+    parser.add_argument('--batch-size', type=int, default=100, metavar='<int>', help='Set batch size (default=100)')
     parser.add_argument('-s', '--steps', type=int, default=500, metavar='<int>', help='How many times to update model (default=500)')
     parser.add_argument('--save-every', type=int, default=500, metavar='<int>', help='Save every <int> steps (default=500)')
     parser.add_argument('--verbose-every', type=int, default=10, metavar='<int>', help='Print status every <int> steps (default=10)')
