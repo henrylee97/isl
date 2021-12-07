@@ -1,4 +1,4 @@
-from torch import nn
+import torch.nn as nn
 
 
 def DenseNet(in_features: int, n_class: int, n_hidden: int = 512, n_layers: int = 6, bias: bool = True) -> nn.Module:
