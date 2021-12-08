@@ -88,6 +88,10 @@ def main(*argv) -> None:
 
     if use_gpu:
         model = model.cuda()
+        criterion = criterion.cuda()
+
+    model.train()
+    criterion.train()
 
     verbose_running_loss = 0
     verbose_running_accuracy = 0
