@@ -18,8 +18,8 @@ def load_cifar(batch_size: int = 100, use_gpu: bool = False, use_cifar100: bool 
     return test
 
 
-def make_model(use_relu: bool = False) -> nn.Module:
-    return LeNet5(in_channels=3, n_class=100, use_relu=use_relu)
+def make_model(n_class: int, use_relu: bool = False) -> nn.Module:
+    return LeNet5(in_channels=3, n_class=n_class, use_relu=use_relu)
 
 
 def load_model(path: Union[str, Path], model: nn.Module) -> nn.Module:
@@ -51,7 +51,7 @@ def main(*argv) -> None:
 
     test = load_cifar(args.batch_size, use_gpu, args.cifar100)
 
-    model = make_model(args.relu)
+    model = make_model(100 if args.cifar100 else 10, args.relu)
     model = load_model(args.model, model)
     print(f'Model loaded: {args.model}')
 
