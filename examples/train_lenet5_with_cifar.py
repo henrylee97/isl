@@ -126,14 +126,14 @@ def main(*argv) -> None:
 
         if current_step % args.save_every == 0:
             model_path = path / \
-                f'lenet5{"_relu_" if args.relu else ""}_with_cifar{100 if args.cifar100 else 10}_{current_step}steps.pt'
+                f'lenet5{"_relu" if args.relu else ""}_with_cifar{100 if args.cifar100 else 10}_{current_step}steps.pt'
             save_model(model_path, model, optimizer, current_step)
             print(f'Model saved: {model_path}')
 
             if save_running_accuracy / args.verbose_every > save_best_accuracy:
                 save_best_accuracy = save_running_accuracy / args.verbose_every
                 model_path = path / \
-                    f'lenet5{"_relu_" if args.relu else ""}_with_cifar{100 if args.cifar100 else 10}_best.pt'
+                    f'lenet5{"_relu" if args.relu else ""}_with_cifar{100 if args.cifar100 else 10}_best.pt'
                 save_model(model_path, model, optimizer, current_step)
                 print(f'Model saved: {model_path}')
             save_running_accuracy = 0
