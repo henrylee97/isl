@@ -32,6 +32,15 @@ def load_model(path: Union[str, Path], model: nn.Module, optimizer: optim.Optimi
     return model, optimizer, loaded['current_step']
 
 
+def save_model(path: Union[str, Path], model: nn.Module, optimizer: optim.Optimizer, current_step: int) -> None:
+    path = Path(path)
+    torch.save({
+        'current_step': current_step,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict()
+    }, path)
+
+
 def main(*argv) -> None:
 
     parser = ArgumentParser(
@@ -80,8 +89,11 @@ def main(*argv) -> None:
     if use_gpu:
         model = model.cuda()
 
-    running_loss = 0
-    running_accuracy = 0
+    verbose_running_loss = 0
+    verbose_running_accuracy = 0
+
+    save_running_accuracy = 0
+    save_best_accuracy = 0
     while current_step < args.steps:
         current_step += 1
 
@@ -100,26 +112,31 @@ def main(*argv) -> None:
         loss.backward()
         optimizer.step()
 
-        running_loss += loss.cpu().item()
+        verbose_running_loss += loss.cpu().item()
 
         _, y_hat = torch.max(y_hat, 1)
         accuracy = (y_hat == y_star).sum().item()
-        running_accuracy += accuracy / args.batch_size
+        verbose_running_accuracy += accuracy / args.batch_size
+        save_running_accuracy += accuracy / args.batch_size
 
         if current_step % args.verbose_every == 0:
-            print(f'[{current_step}/{args.steps}] loss: {running_loss / args.verbose_every:.4f} accuracy: {running_accuracy / args.verbose_every * 100:.2f}%')
-            running_loss = 0
-            running_accuracy = 0
+            print(f'[{current_step}/{args.steps}] loss: {verbose_running_loss / args.verbose_every:.4f} accuracy: {verbose_running_accuracy / args.verbose_every * 100:.2f}%')
+            verbose_running_loss = 0
+            verbose_running_accuracy = 0
 
         if current_step % args.save_every == 0:
             model_path = path / \
                 f'lenet5{"_relu_" if args.relu else ""}_with_cifar{100 if args.cifar100 else 10}_{current_step}steps.pt'
-            torch.save({
-                'current_step': current_step,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict()
-            }, model_path)
+            save_model(model_path, model, optimizer, current_step)
             print(f'Model saved: {model_path}')
+
+            if save_running_accuracy / args.verbose_every > save_best_accuracy:
+                save_best_accuracy = save_running_accuracy / args.verbose_every
+                model_path = path / \
+                    f'lenet5{"_relu_" if args.relu else ""}_with_cifar{100 if args.cifar100 else 10}_best.pt'
+                save_model(model_path, model, optimizer, current_step)
+                print(f'Model saved: {model_path}')
+            save_running_accuracy = 0
 
 
 if __name__ == '__main__':
