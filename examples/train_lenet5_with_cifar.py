@@ -15,12 +15,13 @@ import torch.optim as optim
 def load_cifar(batch_size: int = 100, use_gpu: bool = False, use_cifar100: bool = False) -> DataLoader:
     CIFAR = CIFAR100 if use_cifar100 else CIFAR10
     dataset = CIFAR(download=True)
-    train = DataLoader(dataset.train, batch_size=batch_size, shuffle=True, pin_memory=use_gpu)
+    train = DataLoader(dataset.train, batch_size=batch_size,
+                       shuffle=True, pin_memory=use_gpu)
     return train
 
 
-def make_model() -> nn.Module:
-    return LeNet5(in_channels=3, n_class=100)
+def make_model(use_relu: bool = False) -> nn.Module:
+    return LeNet5(in_channels=3, n_class=100, use_relu=use_relu)
 
 
 def load_model(path: Union[str, Path], model: nn.Module, optimizer: optim.Optimizer) -> Tuple[nn.Module, optim.Optimizer, int]:
@@ -33,16 +34,28 @@ def load_model(path: Union[str, Path], model: nn.Module, optimizer: optim.Optimi
 
 def main(*argv) -> None:
 
-    parser = ArgumentParser(description='ISL Example Script: Train LeNet5 with CIFAR')
-    parser.add_argument('--cuda', action='store_true', help='Use GPU if avaiable')
-    parser.add_argument('--cifar100', action='store_true', help='Use CIFAR100 instead of CIFAR10')
-    parser.add_argument('--batch-size', type=int, default=100, metavar='<int>', help='Set batch size (default=100)')
-    parser.add_argument('-s', '--steps', type=int, default=500, metavar='<int>', help='How many times to update model (default=500)')
-    parser.add_argument('--save-every', type=int, default=500, metavar='<int>', help='Save every <int> steps (default=500)')
-    parser.add_argument('--verbose-every', type=int, default=10, metavar='<int>', help='Print status every <int> steps (default=10)')
-    parser.add_argument('-lr', '--learning-rate', type=float, default=0.1, metavar='<float>', help='Set learning rate (default=0.1)')
-    parser.add_argument('--path', type=str, default='./result', metavar='<path>', help='Path to save trained models (default=./result)')
-    parser.add_argument('--continual', type=str, default=None, metavar='<path>', help='Continual training from existing model in <path>')
+    parser = ArgumentParser(
+        description='ISL Example Script: Train LeNet5 with CIFAR')
+    parser.add_argument('--cuda', action='store_true',
+                        help='Use GPU if avaiable')
+    parser.add_argument('--cifar100', action='store_true',
+                        help='Use CIFAR100 instead of CIFAR10')
+    parser.add_argument('--relu', action='store_true',
+                        help='Use ReLU as activation function for hidden layers')
+    parser.add_argument('--batch-size', type=int, default=100,
+                        metavar='<int>', help='Set batch size (default=100)')
+    parser.add_argument('-s', '--steps', type=int, default=500,
+                        metavar='<int>', help='How many times to update model (default=500)')
+    parser.add_argument('--save-every', type=int, default=500,
+                        metavar='<int>', help='Save every <int> steps (default=500)')
+    parser.add_argument('--verbose-every', type=int, default=10,
+                        metavar='<int>', help='Print status every <int> steps (default=10)')
+    parser.add_argument('-lr', '--learning-rate', type=float, default=0.1,
+                        metavar='<float>', help='Set learning rate (default=0.1)')
+    parser.add_argument('--path', type=str, default='./result', metavar='<path>',
+                        help='Path to save trained models (default=./result)')
+    parser.add_argument('--continual', type=str, default=None, metavar='<path>',
+                        help='Continual training from existing model in <path>')
     args = parser.parse_args(argv)
 
     use_gpu = args.cuda and torch.cuda.is_available()
@@ -53,14 +66,15 @@ def main(*argv) -> None:
     train = load_cifar(args.batch_size, use_gpu, args.cifar100)
     iterator = iter(train)
 
-    model = make_model()
+    model = make_model(args.relu)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=args.learning_rate)
 
     current_step = 0
 
     if args.continual is not None:
-        model, optimizer, current_step = load_model(args.continual, model, optimizer)
+        model, optimizer, current_step = load_model(
+            args.continual, model, optimizer)
         print(f'Model loaded: {args.continual}')
 
     if use_gpu:
@@ -98,7 +112,8 @@ def main(*argv) -> None:
             running_accuracy = 0
 
         if current_step % args.save_every == 0:
-            model_path = path / f'lenet5_with_cifar{100 if args.cifar100 else 10}_{current_step}steps.pt'
+            model_path = path / \
+                f'lenet5{"_relu_" if args.relu else ""}_with_cifar{100 if args.cifar100 else 10}_{current_step}steps.pt'
             torch.save({
                 'current_step': current_step,
                 'model_state_dict': model.state_dict(),
