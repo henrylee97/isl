@@ -68,6 +68,8 @@ def main(*argv) -> None:
         description='ISL Example Script: Train LeNet5 with CIFAR')
     parser.add_argument('-l', '--loss', type=str, required=True,
                         metavar='<path>', help='Pretraine MLPLoss model')
+    parser.add_argument('--sigmoid', action='store_true',
+                        help='Use sigmoid at the last layer of MLPLoss')
     parser.add_argument('--cuda', action='store_true',
                         help='Use GPU if avaiable')
     parser.add_argument('--cifar100', action='store_true',
@@ -95,7 +97,7 @@ def main(*argv) -> None:
 
     n_class = 100 if args.cifar100 else 10
     model = make_model(n_class, args.relu)
-    criterion = MLPLoss(n_class, 3, 20)
+    criterion = MLPLoss(n_class, last_sigmoid=args.sigmoid)
     criterion = load_mlploss(args.loss, criterion)
     optimizer = optim.SGD(model.parameters(), lr=args.learning_rate)
 

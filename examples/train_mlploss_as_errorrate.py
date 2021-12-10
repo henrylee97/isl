@@ -51,7 +51,7 @@ def load_logit_error_data(n: int, n_class: int, batch_size: int = 100, use_gpu: 
 
 
 def make_model(n_class: int) -> nn.Module:
-    return MLPLossTrainer(n_class)
+    return MLPLossTrainer(n_class, last_sigmoid=True)
 
 
 def load_model(path: Union[str, Path],
