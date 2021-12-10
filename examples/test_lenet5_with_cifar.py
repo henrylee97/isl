@@ -3,6 +3,7 @@ from typing import Union
 from isl.datasets import CIFAR10
 from isl.datasets import CIFAR100
 from isl.models import LeNet5
+from isl.trainer import simple_validation
 from pathlib import Path
 from torch.utils.data import DataLoader
 import sys
@@ -43,8 +44,6 @@ def main(*argv) -> None:
                         help='Use ReLU as activation function for hidden layers')
     parser.add_argument('--batch-size', type=int, default=100,
                         metavar='<int>', help='Set batch size (default=100)')
-    parser.add_argument('--verbose-every', type=int, default=10,
-                        metavar='<int>', help='Print status every <int> steps (default=10)')
     args = parser.parse_args(argv)
 
     use_gpu = args.cuda and torch.cuda.is_available()
@@ -61,34 +60,9 @@ def main(*argv) -> None:
         model = model.cuda()
         criterion = criterion.cuda()
 
-    model.eval()
-    criterion.eval()
-
-    loss = 0
-    accuracy = 0
-
-    with torch.no_grad():
-        for current_step, (x, y_star) in enumerate(test):
-
-            if use_gpu:
-                x = x.cuda()
-                y_star = y_star.cuda()
-
-            y_hat = model(x)
-
-            current_loss = criterion(y_hat, y_star).cpu().item()
-            loss += current_loss
-
-            _, y_hat = torch.max(y_hat, 1)
-            current_accuracy = (y_hat == y_star).sum().cpu().item()
-            current_accuracy /= args.batch_size
-            accuracy += current_accuracy
-
-            print(f'\r[{current_step + 1}/{len(test)}] loss: {current_loss:.4f} '
-                  f'accuracy: {current_accuracy * 100:.2f}%', end='', flush=True)
-        print()
-    print(f'Total loss: {loss / len(test):.4f} '
-          f'total accuracy: {accuracy / len(test) * 100:.2f}%')
+    loss, accuracy = simple_validation(
+        model, criterion, test, verbose=1, use_gpu=use_gpu)
+    print(f'Total loss: {loss:.4f} total accuracy: {accuracy * 100:.2f}%')
 
 
 if __name__ == '__main__':
