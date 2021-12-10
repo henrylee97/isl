@@ -18,7 +18,7 @@ def spawn_child(criterion: nn.Module,
 def evaluate_candidate(criterion: nn.Module,
                        model: nn.Module,
                        optimizer: optim.Optimizer,
-                       preferance: Callable[[torch.Tensor, torch.Tensor], float],
+                       perference: Callable[[torch.Tensor, torch.Tensor], float],
                        x: torch.Tensor,
                        y_star: torch.Tensor) -> float:
     # backup original model
@@ -37,7 +37,7 @@ def evaluate_candidate(criterion: nn.Module,
     model.eval()
     with torch.no_grad():
         y_hat = model(x)
-        score = preferance(y_hat, y_star)
+        score = perference(y_hat, y_star)
 
     # restore model
     model.load_state_dict(model_backup.state_dict())
@@ -49,7 +49,7 @@ def evaluate_candidate(criterion: nn.Module,
 def criterion_evolution(model: nn.Module,
                         optimizer: optim.Optimizer,
                         criterion: nn.Module,
-                        preferance: Callable[[torch.Tensor, torch.Tensor], float],
+                        perference: Callable[[torch.Tensor, torch.Tensor], float],
                         x: torch.Tensor,
                         y_star: torch.Tensor,
                         n_candidates: int = 5,
@@ -59,11 +59,11 @@ def criterion_evolution(model: nn.Module,
                  for _ in range(n_candidates - 1)]
     best_candidate = criterion
     best_preference = evaluate_candidate(
-        best_candidate, model, optimizer, preferance, x, y_star)
+        best_candidate, model, optimizer, perference, x, y_star)
 
     for child in childrens:
         child_preference = evaluate_candidate(
-            child, model, optimizer, preferance, x, y_star)
+            child, model, optimizer, perference, x, y_star)
         if child_preference >= best_preference:
             best_preference = child_preference
             best_candidate = child
@@ -74,7 +74,7 @@ def criterion_evolution(model: nn.Module,
 def swarm_trainer(model: nn.Module,
                   criterion: nn.Module,
                   optimizer: optim.Optimizer,
-                  preferance: Callable[[torch.Tensor, torch.Tensor], float],
+                  perference: Callable[[torch.Tensor, torch.Tensor], float],
                   dataset: torch.utils.data.DataLoader,
                   valset: torch.utils.data.DataLoader,
                   n_candidates: int = 5,
@@ -110,7 +110,7 @@ def swarm_trainer(model: nn.Module,
             valx = valx.cuda()
             valy_star = valy_star.cuda()
 
-        criterion = criterion_evolution(model, optimizer, criterion, preferance,
+        criterion = criterion_evolution(model, optimizer, criterion, perference,
                                         valx, valy_star, n_candidates, stddiv)
 
         model.train()
