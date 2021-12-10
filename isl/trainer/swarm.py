@@ -64,7 +64,7 @@ def criterion_evolution(model: nn.Module,
     for child in childrens:
         child_preference = evaluate_candidate(
             child, model, optimizer, preferance, x, y_star)
-        if child_preference > best_preference:
+        if child_preference >= best_preference:
             best_preference = child_preference
             best_candidate = child
 
