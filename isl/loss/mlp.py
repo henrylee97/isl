@@ -3,10 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class MLPLoss(nn.Module):
+class MLPLossTrainer(nn.Module):
 
     def __init__(self, n_class: int, n_layers: int = 3, hidden_size: int = 20) -> nn.Module:
-        super(MLPLoss, self).__init__()
+        super(MLPLossTrainer, self).__init__()
 
         self.n_class = n_class
 
@@ -21,4 +21,10 @@ class MLPLoss(nn.Module):
         y_star = F.one_hot(y_star, self.n_class)
         contat_logits = torch.cat([y_hat, y_star], dim=-1)
         loss_foreach_batch = self.layers(contat_logits)
-        return loss_foreach_batch.sum()
+        return torch.sigmoid(loss_foreach_batch)
+
+
+class MLPLoss(MLPLossTrainer):
+
+    def forward(self, y_hat: torch.Tensor, y_star: torch.Tensor) -> torch.Tensor:
+        return super(MLPLoss, self).forward(y_hat, y_star).sum()
