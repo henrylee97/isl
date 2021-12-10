@@ -113,6 +113,7 @@ def main(*argv) -> None:
         if val_acc > best_acc:
             model_path = path / \
                 f'lenet5{"_relu" if args.relu else ""}_cifar{100 if args.cifar100 else 10}_best.pt'
+            save_model(model_path, model, optimizer, current_epoch, best_acc)
             print(f'Best model saved: {model_path}')
 
 
