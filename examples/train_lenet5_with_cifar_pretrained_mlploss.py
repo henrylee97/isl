@@ -64,8 +64,7 @@ def load_mlploss(path: Union[str, Path], criterion: nn.Module) -> nn.Module:
 
 def main(*argv) -> None:
 
-    parser = ArgumentParser(
-        description='ISL Example Script: Train LeNet5 with CIFAR')
+    parser = ArgumentParser()
     parser.add_argument('-l', '--loss', type=str, required=True,
                         metavar='<path>', help='Pretraine MLPLoss model')
     parser.add_argument('--sigmoid', action='store_true',

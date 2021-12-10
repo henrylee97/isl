@@ -78,8 +78,7 @@ def save_model(path: Union[str, Path],
 
 def main(*argv) -> None:
 
-    parser = ArgumentParser(
-        description='ISL Example Script: Train LeNet5 with CIFAR')
+    parser = ArgumentParser()
     parser.add_argument('--cuda', action='store_true',
                         help='Use GPU if avaiable')
     parser.add_argument('--batch-size', type=int, default=100,

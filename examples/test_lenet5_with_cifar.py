@@ -32,8 +32,7 @@ def load_model(path: Union[str, Path], model: nn.Module) -> nn.Module:
 
 def main(*argv) -> None:
 
-    parser = ArgumentParser(
-        description='ISL Example Script: Test LeNet5 with CIFAR')
+    parser = ArgumentParser()
     parser.add_argument('-m', '--model', type=str, required=True, metavar='<path>',
                         help='Path to save trained models (required)')
     parser.add_argument('--cuda', action='store_true',
