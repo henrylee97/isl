@@ -56,10 +56,18 @@ def save_model(path: Union[str, Path],
     }, path)
 
 
+def load_mlploss(path: Union[str, Path], criterion: nn.Module) -> nn.Module:
+    loaded = torch.load(path)
+    criterion.load_state_dict(loaded['model_state_dict'])
+    return criterion
+
+
 def main(*argv) -> None:
 
     parser = ArgumentParser(
         description='ISL Example Script: Train LeNet5 with CIFAR')
+    parser.add_argument('-l', '--loss', type=str, required=True,
+                        metavar='<path>', help='Pretraine MLPLoss model')
     parser.add_argument('--cuda', action='store_true',
                         help='Use GPU if avaiable')
     parser.add_argument('--cifar100', action='store_true',
@@ -88,6 +96,7 @@ def main(*argv) -> None:
     n_class = 100 if args.cifar100 else 10
     model = make_model(n_class, args.relu)
     criterion = MLPLoss(n_class, 3, 20)
+    criterion = load_mlploss(args.loss, criterion)
     optimizer = optim.SGD(model.parameters(), lr=args.learning_rate)
 
     current_epoch = 0
@@ -118,6 +127,7 @@ def main(*argv) -> None:
                    optimizer, current_epoch, best_acc)
 
         if val_acc > best_acc:
+            best_acc = val_acc
             model_path = path / \
                 f'lenet5{"_relu" if args.relu else ""}_cifar{100 if args.cifar100 else 10}_mlploss_best.pt'
             save_model(model_path, model, criterion,
