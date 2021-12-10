@@ -18,7 +18,15 @@ class LogitErrorDataset(Dataset):
 
     def __init__(self, n: int, n_class: int):
         self.data = []
-        for _ in range(n):
+        # make correct set
+        for _ in range(n // 2):
+            y_hat = torch.randn(n_class)
+            y_hat = F.softmax(y_hat, dim=0)
+            _, y_star = torch.max(y_hat, 0)
+            error = torch.zeros((1,), dtype=torch.float32)
+            self.data.append((y_hat, y_star, error))
+        # random generation
+        for _ in range(n - n // 2):
             y_hat = torch.randn(n_class)
             y_hat = F.softmax(y_hat, dim=0)
             y_star = torch.randint(n_class, (1,))
@@ -35,7 +43,8 @@ class LogitErrorDataset(Dataset):
 
 def load_logit_error_data(n: int, n_class: int, batch_size: int = 100, use_gpu: bool = False) -> DataLoader:
     train = LogitErrorDataset(n, n_class)
-    train = DataLoader(train, batch_size=batch_size, pin_memory=use_gpu)
+    train = DataLoader(train, batch_size=batch_size,
+                       shuffle=True, pin_memory=use_gpu)
     test = LogitErrorDataset(int(n * 0.2), n_class)
     test = DataLoader(test, batch_size=batch_size, pin_memory=use_gpu)
     return train, test
