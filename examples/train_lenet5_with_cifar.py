@@ -4,6 +4,8 @@ from typing import Union
 from isl.datasets import CIFAR10
 from isl.datasets import CIFAR100
 from isl.models import LeNet5
+from isl.trainer import simple_trainer
+from isl.trainer import simple_validation
 from pathlib import Path
 from torch.utils.data import DataLoader
 import sys
@@ -17,25 +19,33 @@ def load_cifar(batch_size: int = 100, use_gpu: bool = False, use_cifar100: bool 
     dataset = CIFAR(download=True)
     train = DataLoader(dataset.train, batch_size=batch_size,
                        shuffle=True, pin_memory=use_gpu)
-    return train
+    test = DataLoader(dataset.test, batch_size=batch_size, pin_memory=use_gpu)
+    return train, test
 
 
 def make_model(n_class: int, use_relu: bool = False) -> nn.Module:
     return LeNet5(in_channels=3, n_class=n_class, use_relu=use_relu)
 
 
-def load_model(path: Union[str, Path], model: nn.Module, optimizer: optim.Optimizer) -> Tuple[nn.Module, optim.Optimizer, int]:
+def load_model(path: Union[str, Path],
+               model: nn.Module,
+               optimizer: optim.Optimizer) -> Tuple[nn.Module, optim.Optimizer, int, float]:
     path = Path(path)
     loaded = torch.load(path)
     model.load_state_dict(loaded['model_state_dict'])
     optimizer.load_state_dict(loaded['optimizer_state_dict'])
-    return model, optimizer, loaded['current_step']
+    return model, optimizer, loaded['epochs'], loaded['best_acc']
 
 
-def save_model(path: Union[str, Path], model: nn.Module, optimizer: optim.Optimizer, current_step: int) -> None:
+def save_model(path: Union[str, Path],
+               model: nn.Module,
+               optimizer: optim.Optimizer,
+               epochs: int,
+               best_acc: float) -> None:
     path = Path(path)
     torch.save({
-        'current_step': current_step,
+        'epochs': epochs,
+        'best_acc': best_acc,
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict()
     }, path)
@@ -53,12 +63,8 @@ def main(*argv) -> None:
                         help='Use ReLU as activation function for hidden layers')
     parser.add_argument('--batch-size', type=int, default=100,
                         metavar='<int>', help='Set batch size (default=100)')
-    parser.add_argument('-s', '--steps', type=int, default=500,
-                        metavar='<int>', help='How many times to update model (default=500)')
-    parser.add_argument('--save-every', type=int, default=500,
-                        metavar='<int>', help='Save every <int> steps (default=500)')
-    parser.add_argument('--verbose-every', type=int, default=10,
-                        metavar='<int>', help='Print status every <int> steps (default=10)')
+    parser.add_argument('-e', '--epochs', type=int, default=1,
+                        metavar='<int>', help='Set epochs (default=1)')
     parser.add_argument('-lr', '--learning-rate', type=float, default=0.1,
                         metavar='<float>', help='Set learning rate (default=0.1)')
     parser.add_argument('--path', type=str, default='./result', metavar='<path>',
@@ -72,17 +78,17 @@ def main(*argv) -> None:
     path = Path(args.path)
     path.mkdir(parents=True, exist_ok=True)
 
-    train = load_cifar(args.batch_size, use_gpu, args.cifar100)
-    iterator = iter(train)
+    train, test = load_cifar(args.batch_size, use_gpu, args.cifar100)
 
     model = make_model(100 if args.cifar100 else 10, args.relu)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=args.learning_rate)
 
-    current_step = 0
+    current_epoch = 0
+    best_acc = 0
 
     if args.continual is not None:
-        model, optimizer, current_step = load_model(
+        model, optimizer, current_epoch, best_acc = load_model(
             args.continual, model, optimizer)
         print(f'Model loaded: {args.continual}')
 
@@ -90,57 +96,24 @@ def main(*argv) -> None:
         model = model.cuda()
         criterion = criterion.cuda()
 
-    model.train()
-    criterion.train()
+    for _ in range(current_epoch, args.epochs):
+        current_epoch += 1
+        print(f'Epoch {current_epoch}')
+        model, (train_loss, train_acc) = simple_trainer(model, criterion, optimizer,
+                                                        train, verbose=1, use_gpu=use_gpu)
+        val_loss, val_acc = simple_validation(model, criterion, test,
+                                              use_gpu=use_gpu)
+        print(f'Train loss: {train_loss:.4f} Train accuracy: {train_acc:.4f} '
+              f'Validation loss: {val_loss:.4f} Validation accuracy: {val_acc:.4f}')
 
-    verbose_running_loss = 0
-    verbose_running_accuracy = 0
+        model_path = path / \
+            f'lenet5{"_relu" if args.relu else ""}_cifar{100 if args.cifar100 else 10}_{current_epoch}epochs.pt'
+        save_model(model_path, model, optimizer, current_epoch, best_acc)
 
-    save_running_accuracy = 0
-    save_best_accuracy = 0
-    while current_step < args.steps:
-        current_step += 1
-
-        try:
-            x, y_star = next(iterator)
-        except StopIteration:
-            iterator = iter(train)
-            x, y_star = next(iterator)
-        if use_gpu:
-            x = x.cuda()
-            y_star = y_star.cuda()
-
-        optimizer.zero_grad()
-        y_hat = model(x)
-        loss = criterion(y_hat, y_star)
-        loss.backward()
-        optimizer.step()
-
-        verbose_running_loss += loss.cpu().item()
-
-        _, y_hat = torch.max(y_hat, 1)
-        accuracy = (y_hat == y_star).sum().item()
-        verbose_running_accuracy += accuracy / args.batch_size
-        save_running_accuracy += accuracy / args.batch_size
-
-        if current_step % args.verbose_every == 0:
-            print(f'[{current_step}/{args.steps}] loss: {verbose_running_loss / args.verbose_every:.4f} accuracy: {verbose_running_accuracy / args.verbose_every * 100:.2f}%')
-            verbose_running_loss = 0
-            verbose_running_accuracy = 0
-
-        if current_step % args.save_every == 0:
+        if val_acc > best_acc:
             model_path = path / \
-                f'lenet5{"_relu" if args.relu else ""}_with_cifar{100 if args.cifar100 else 10}_{current_step}steps.pt'
-            save_model(model_path, model, optimizer, current_step)
-            print(f'Model saved: {model_path}')
-
-            if save_running_accuracy / args.verbose_every > save_best_accuracy:
-                save_best_accuracy = save_running_accuracy / args.verbose_every
-                model_path = path / \
-                    f'lenet5{"_relu" if args.relu else ""}_with_cifar{100 if args.cifar100 else 10}_best.pt'
-                save_model(model_path, model, optimizer, current_step)
-                print(f'Model saved: {model_path}')
-            save_running_accuracy = 0
+                f'lenet5{"_relu" if args.relu else ""}_cifar{100 if args.cifar100 else 10}_best.pt'
+            print(f'Best model saved: {model_path}')
 
 
 if __name__ == '__main__':
