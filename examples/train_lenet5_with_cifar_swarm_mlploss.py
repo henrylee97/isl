@@ -84,6 +84,10 @@ def main(*argv) -> None:
                         help='Use ReLU as activation function for hidden layers in LeNet-5')
     parser.add_argument('--batch-size', type=int, default=100,
                         metavar='<int>', help='Set batch size (default=100)')
+    parser.add_argument('-c', '--children', type=int, default=5, metavar='<int>',
+                        help='Number of children in swarm search (default=5)')
+    parser.add_argument('--stddiv', type=float, default=0.1, metavar='<float>',
+                        help='Standard diviation for the random mutation (default=0.1)')
     parser.add_argument('-e', '--epochs', type=int, default=1,
                         metavar='<int>', help='Set epochs (default=1)')
     parser.add_argument('-lr', '--learning-rate', type=float, default=0.1,
@@ -122,7 +126,8 @@ def main(*argv) -> None:
         current_epoch += 1
         print(f'Epoch {current_epoch}')
         model, (train_loss, train_acc) = swarm_trainer(model, criterion,
-                                                       optimizer, accuracy, train, test, verbose=1, use_gpu=use_gpu)
+                                                       optimizer, accuracy, train, test,
+                                                       args.children, args.stddiv, 1, use_gpu)
         val_loss, val_acc = simple_validation(model, criterion, test,
                                               use_gpu=use_gpu)
         print(f'Train loss: {train_loss:.4f} Train accuracy: {train_acc:.4f} '
