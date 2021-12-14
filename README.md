@@ -1,4 +1,4 @@
-# Inverse Supervised Learning: Automatic Loss Function Inference From Human Feedback
+# Inverse Supervised Learning
 
 Inverse system that automatically infers surrogate loss function from human preference function.
 
