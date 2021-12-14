@@ -1,5 +1,7 @@
 # Inverse Supervised Learning: Automatic Loss Function Inference From Human Feedback
 
+Inverse system that automatically infers surrogate loss function from human preference function.
+
 ## Authors
 * [Changu Kang](https://github.com/changukang)
 * [Seokhyun Lee](https://github.com/HenryLee97)
